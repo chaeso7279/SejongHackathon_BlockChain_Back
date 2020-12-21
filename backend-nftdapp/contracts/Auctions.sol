@@ -103,6 +103,19 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         }
     }
 
+    function sendEtherTo(uint _auctionId, address _to) public {
+        // memory: 휘발성, 잠시 메모리에 저장됨
+        Auction memory myAuction = auctions[_auctionId];
+        uint256 price = myAuction.price;
+
+        // 옥션의 NFT컨트랙트 어드레스(_repoAddress), _tokenId, 
+        // 현재 컨트랙트 어드레스(address(this)), 받는 어드레스(_to)
+        // 받는 어드레스에 소유권이 승인되고 전달되는 함수
+        if(approveAndTransfer(address(this), _to, myAuction.repoAddress, myAuction.tokenId)){
+            
+        }
+    }
+
     function approveAndTransfer(address _from, address _to, address _repoAddress, uint256 _tokenId) 
     internal returns (bool) {   // internal: 컨트랙트 내부에서만 호출 가능
         // MyNFT 컨트랙트에 컨트랙트 어드레스 넣고 인스턴스 가져옴
