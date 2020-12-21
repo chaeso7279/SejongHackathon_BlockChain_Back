@@ -38,8 +38,14 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         _;
     }
 
+    // 해당 컨트랙트가 해당 옥션의 owner 인지 확인
+    modifier ownable() {
+        require(msg.sender == address(this));
+        _;
+    }
+
     // 새 옥션 생성
-    function createAuction(address _repoAddress, uint256 _tokenId, 
+    function createAuction(address _mediator, address _repoAddress, uint256 _tokenId, 
     string _auctionTitle, string _metadata, uint256 _price) public
     constractIsNFTOwner(_repoAddress, _tokenId) returns(bool) { 
         // 토큰이 Auctions 컨트랙트 어드레스의 소유인지 확인 => 아니면 못들어옴
@@ -49,10 +55,16 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         Auction memory newAuction;
         newAuction.name = _auctionTitle;
         newAuction.price = _price;
+        
         newAuction.metadata = _metadata;
         newAuction.tokenId = _tokenId;
         newAuction.repoAddress = _repoAddress;
+        
         newAuction.owner = msg.sender;
+        newAuction.seller = msg.sender;
+        newAuction.mediator = _mediator;
+        
+        newAuction.confirmed = CF_DEF;
         newAuction.active = true;
         newAuction.finalized = false;
 
@@ -64,6 +76,15 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         emit AuctionCreated(msg.sender, auctionId);
         return true;
     }
+
+    // 판매자가 판매수락 버튼 누른 후, 호출될 함수
+    function acceptForSale(uint _auctionId, address _buyer) public {        
+        // 물품 구매자 지정
+        auctions[_auctionId].buyer = _buyer;
+        // 중개자에게 물건 전달(owner: 중개자) 
+        Auction memory myAuction = auctions[_auctionId];
+        approveAndTransfer(myAuction.owner, myAuction.mediator, myAuction.repoAddress, myAuction.tokenId);
+    }  
 
     // 옥션을 소유자에게 전달
     function finalizeAution(uint _auctionId, address _to) public {
