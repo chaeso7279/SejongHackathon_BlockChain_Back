@@ -3,15 +3,18 @@ pragma solidity ^0.4.24;
 import "./MyNFT.sol";
 
 contract Auctions {             // 등록된 구매 및 판매 물품들
+    enum CONFIRMED { CF_DEF, CF_OK, CF_CL }
     struct Auction {            // 물품
         string name;            // 물품 이름
         string metadata;        // 메타데이터: ipfs hash
         uint256 price;          // 가격
         uint256 tokenId;        // 토큰 아이디
-        address owner;          // 소유자
+        address owner;          // 소유자(실소유자), 판매자/중개자/구매자 중 하나
+        address seller;         // 판매자
+        address buyer;          // 구매자
+        address mediator;       // 중개자
         address repoAddress;    // nft 컨트랙트 어드레스
-        bool accepted;          // 판매 신청 수락 여부(from 판매자)
-        bool confirmed;         // 구매 확정 여부(from 구매자)
+        uint8 confirmed;        // 구매 확정 여부
         bool active;            // 판매 활성화 여부
         bool finalized;         // 판매 종료 여부
     }
