@@ -9,7 +9,7 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         string metadata;        // 메타데이터: ipfs hash
         uint256 price;          // 가격
         uint256 tokenId;        // 토큰 아이디
-        address owner;          // 소유자(실소유자), 판매자/중개자/구매자 중 하나
+        address owner;          // 소유자
         address seller;         // 판매자
         address buyer;          // 구매자
         address mediator;       // 중개자
@@ -35,12 +35,6 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         address nftOwner = MyNFT(_repoAddress).ownerOf(_tokenId);
         // 해당 토큰의 소유자 어드레스 == Auctions의 컨트랙트 어드레스 => 일치하면 다음으로
         require(nftOwner == address(this));
-        _;
-    }
-
-    // 해당 컨트랙트가 해당 옥션의 owner 인지 확인
-    modifier ownable() {
-        require(msg.sender == address(this));
         _;
     }
 
@@ -82,8 +76,7 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         // 물품 구매자 지정
         auctions[_auctionId].buyer = _buyer;
         // 중개자에게 물건 전달(owner: 중개자) 
-        Auction memory myAuction = auctions[_auctionId];
-        approveAndTransfer(myAuction.owner, myAuction.mediator, myAuction.repoAddress, myAuction.tokenId);
+       changeAuctionOwner(_autionId, _auctions[_auctionId].mediator);
     }  
 
     // 옥션을 소유자에게 전달
@@ -100,19 +93,6 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
 
             // AuctionFinalized 이벤트 전달
             emit AuctionFinalized(msg.sender, _auctionId);
-        }
-    }
-
-    function sendEtherTo(uint _auctionId, address _to) public {
-        // memory: 휘발성, 잠시 메모리에 저장됨
-        Auction memory myAuction = auctions[_auctionId];
-        uint256 price = myAuction.price;
-
-        // 옥션의 NFT컨트랙트 어드레스(_repoAddress), _tokenId, 
-        // 현재 컨트랙트 어드레스(address(this)), 받는 어드레스(_to)
-        // 받는 어드레스에 소유권이 승인되고 전달되는 함수
-        if(approveAndTransfer(address(this), _to, myAuction.repoAddress, myAuction.tokenId)){
-            
         }
     }
 
