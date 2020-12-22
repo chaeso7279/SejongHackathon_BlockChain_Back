@@ -34,7 +34,7 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
     }
 
     // 새 옥션 생성
-    function createAuction(address _mediator, address _repoAddress, uint256 _tokenId, 
+    function createAuction(address _repoAddress, uint256 _tokenId, 
     string _auctionTitle, string _metadata, uint256 _price) public
     constractIsNFTOwner(_repoAddress, _tokenId) returns(bool) { 
         // 토큰이 Auctions 컨트랙트 어드레스의 소유인지 확인 => 아니면 못들어옴
