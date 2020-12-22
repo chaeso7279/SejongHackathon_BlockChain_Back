@@ -3,18 +3,13 @@ pragma solidity ^0.4.24;
 import "./MyNFT.sol";
 
 contract Auctions {             // 등록된 구매 및 판매 물품들
-    enum CONFIRMED { CF_DEF, CF_OK, CF_CL }
     struct Auction {            // 물품
         string name;            // 물품 이름
         string metadata;        // 메타데이터: ipfs hash
         uint256 price;          // 가격
         uint256 tokenId;        // 토큰 아이디
         address owner;          // 소유자
-        address seller;         // 판매자
-        address buyer;          // 구매자
-        address mediator;       // 중개자
         address repoAddress;    // nft 컨트랙트 어드레스
-        uint8 confirmed;        // 구매 확정 여부
         bool active;            // 판매 활성화 여부
         bool finalized;         // 판매 종료 여부
     }
@@ -55,10 +50,7 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         newAuction.repoAddress = _repoAddress;
         
         newAuction.owner = msg.sender;
-        newAuction.seller = msg.sender;
-        newAuction.mediator = _mediator;
         
-        newAuction.confirmed = CF_DEF;
         newAuction.active = true;
         newAuction.finalized = false;
 
@@ -70,14 +62,6 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
         emit AuctionCreated(msg.sender, auctionId);
         return true;
     }
-
-    // 판매자가 판매수락 버튼 누른 후, 호출될 함수
-    function acceptForSale(uint _auctionId, address _buyer) public {        
-        // 물품 구매자 지정
-        auctions[_auctionId].buyer = _buyer;
-        // 중개자에게 물건 전달(owner: 중개자) 
-       changeAuctionOwner(_autionId, _auctions[_auctionId].mediator);
-    }  
 
     // 옥션을 소유자에게 전달
     function finalizeAution(uint _auctionId, address _to) public {
@@ -93,6 +77,21 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
 
             // AuctionFinalized 이벤트 전달
             emit AuctionFinalized(msg.sender, _auctionId);
+        }
+    }
+
+    // 옥션 취소 
+    function cancleAuction(uint _auctionId, address _to) public {
+        // to: 기존 판매자, address(this): 구매자
+        Auction memory refundAuction = auctions[_auctionId];
+
+        if(approveAndTransfer(address(this), _to, refundAuction.repoAddress, refundAuction.tokenId)) {
+            // 환불이 완료된 시점(owner = 판매자)
+            auctions[_auctionId].active = true; // 판매 활성화
+            auctions[_auctionId].finalized = false; // 해당 옥션 상태 종료 X
+
+            // 기존 판매자에게 구매 취소 이벤트 전달
+            emit AuctionCancled(_to, _auctionId);
         }
     }
 
@@ -143,4 +142,5 @@ contract Auctions {             // 등록된 구매 및 판매 물품들
     // 이벤트 정의
     event AuctionCreated(address _owner, uint _auctionId);
     event AuctionFinalized(address _owner, uint _auctionId);
+    event AuctionCancled(address _owner, uint _auctionId);
 }
